@@ -31,10 +31,10 @@ import static com.loopj.android.http.AsyncHttpClient.log;
 
 public class MainActivity extends AppCompatActivity {
     // Constants:
-    final int REQUEST_CODE=123;
+    final int REQUEST_CODE = 123;
     final String WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather";
     // App ID to use OpenWeather data
-    final String APP_ID = "e72____PLEASE_REPLACE_ME_____13";
+    final String APP_ID = "e61ca02db013f09f4499e5e32ef13d82";
     // Time between location updates (5000 milliseconds or 5 seconds)
     final long MIN_TIME = 5000;
     // Distance between location updates (1000m or 1km)
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         changeCityButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent myIntent = new Intent(MainActivity.this,ChangeCityController.class);
+                Intent myIntent = new Intent(MainActivity.this, ChangeCityController.class);
                 startActivity(myIntent);
             }
         });
@@ -89,12 +89,29 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.d("WeatherApp", "onRresume Called");
-        Log.d("WeatherApp", "getting weather for current Location ");
-        getWeatherForCurrentLocation();
+
+        Intent myIntent = getIntent();
+        String city = myIntent.getStringExtra("City");
+
+        if (city != null) {
+            getWeatherForNewCity(city);
+
+
+        } else {
+            Log.d("WeatherApp", "getting weather for current Location ");
+            getWeatherForCurrentLocation();
+
+        }
     }
 
-
     // TODO: Add getWeatherForNewCity(String city) here:
+
+    private void getWeatherForNewCity(String city) {
+        RequestParams params = new RequestParams();
+        params.put("q", city);
+        params.put("appid", APP_ID);
+        letsDoSomeNetworking(params);
+    }
 
 
     // TODO: Add getWeatherForCurrentLocation() here:
@@ -105,16 +122,16 @@ public class MainActivity extends AppCompatActivity {
             public void onLocationChanged(Location location) {
                 Log.d("WeatherApp", "onLocationChanged callback received");
 
-                String longitude  = String.valueOf(location.getLongitude());
-                String latitude  = String.valueOf(location.getLatitude());
+                String longitude = String.valueOf(location.getLongitude());
+                String latitude = String.valueOf(location.getLatitude());
 
-                Log.d("WearherApp","Longitude is " + longitude);
-                Log.d("WearherApp","Latitude is " + latitude);
+                Log.d("WearherApp", "Longitude is " + longitude);
+                Log.d("WearherApp", "Latitude is " + latitude);
 
                 RequestParams prams = new RequestParams();
-                prams.put("lat",latitude);
-                prams.put("lon",longitude);
-                prams.put("appid",APP_ID);
+                prams.put("lat", latitude);
+                prams.put("lon", longitude);
+                prams.put("appid", APP_ID);
                 letsDoSomeNetworking(prams);
             }
 
@@ -143,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_CODE);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_CODE);
             return;
         }
         mLocationManager.requestLocationUpdates(LOCATION_PROVIDER, MIN_TIME, MIN_DISTANCE, mLocationListner);
@@ -153,13 +170,13 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if(requestCode == REQUEST_CODE){
-            if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
-                Log.d("WeatherApp","onRequestPermissionResult : Permission granted!");
+        if (requestCode == REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("WeatherApp", "onRequestPermissionResult : Permission granted!");
                 getWeatherForCurrentLocation();
 
-            }else{
-                Log.d("WeatherApp","PERMISSION DENIED");
+            } else {
+                Log.d("WeatherApp", "PERMISSION DENIED");
 
             }
         }
@@ -167,13 +184,13 @@ public class MainActivity extends AppCompatActivity {
 
 // TODO: Add letsDoSomeNetworking(RequestParams params) here:
 
-    private void letsDoSomeNetworking(RequestParams prams){
+    private void letsDoSomeNetworking(RequestParams prams) {
         AsyncHttpClient client = new AsyncHttpClient();
-        client.get(WEATHER_URL,prams,new JsonHttpResponseHandler(){
+        client.get(WEATHER_URL, prams, new JsonHttpResponseHandler() {
             @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response){
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
 
-                Log.d("WeatherApp" , "Success!  JSON: " + response.toString());
+                Log.d("WeatherApp", "Success!  JSON: " + response.toString());
 
                 WeatherDataModel weatherData = WeatherDataModel.fromJson(response);
 
@@ -184,9 +201,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
-                Log.d("WeatherApp","Fail "+e.toString());
+                Log.d("WeatherApp", "Fail " + e.toString());
                 Log.d("WeatherApp", "Status code " + statusCode);
-                Toast.makeText(MainActivity.this,"Request Failed" ,Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Request Failed", Toast.LENGTH_SHORT).show();
 
             }
         });
@@ -195,19 +212,35 @@ public class MainActivity extends AppCompatActivity {
 
     // TODO: Add updateUI() here:
 
-    private void updateUI(WeatherDataModel weather){
+    private void updateUI(WeatherDataModel weather) {
         mTemperatureLabel.setText(weather.getTemperature());
         mCityLabel.setText(weather.getCity());
 
-        int resourceID =getResources().getIdentifier(weather.getIconName(),"drawable",getPackageName());
+        int resourceID = getResources().getIdentifier(weather.getIconName(), "drawable", getPackageName());
         mWeatherImage.setImageResource(resourceID);
 
     }
 
 
-
     // TODO: Add onPause() here:
 
 
+    @Override
+    protected void onPause() {
+        super.onPause();
 
+        if (mLocationManager != null) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            mLocationManager.removeUpdates(mLocationListner);
+        }
+    }
 }

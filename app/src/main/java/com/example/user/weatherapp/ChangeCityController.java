@@ -34,11 +34,12 @@ public class ChangeCityController extends AppCompatActivity {
             public boolean onEditorAction(TextView v , int ActionId, KeyEvent event){
                 String newCity  = editTextField.getText().toString();
                 Intent newCityIntent = new Intent(ChangeCityController.this,MainActivity.class);
-                
+                newCityIntent.putExtra("City" , newCity);
+                startActivity(newCityIntent);
 
                 return false;
             }
-        }){
+        });{
 
         }
 
